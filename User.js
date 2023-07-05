@@ -17,7 +17,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         require: true
     },
-    googleId: String
+    googleId: String,
+    secret: String
 })
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);

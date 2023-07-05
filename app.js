@@ -57,7 +57,6 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:3000/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
     User.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
@@ -84,9 +83,19 @@ app.get("/login", (req, res)=>{
 app.get("/register", (req, res)=>{
     res.render("register")
 })
-app.get("/secrets", (req, res)=>{
+app.get("/secrets", async (req, res)=>{
+    try {
+        const foundUsers = await User.find({"secret":{$ne:null}})
+        if(foundUsers){
+            res.render("secrets",{usersWithSecrets: foundUsers})
+        }
+    } catch (error) {
+        console.log(error.message);
+    }
+})
+app.get("/submit", (req, res)=>{
     if(req.isAuthenticated()){
-        res.render("secrets")
+        res.render("submit")
     } else {
         res.redirect("/login")
     }
@@ -102,7 +111,20 @@ app.get("/logout", async (req, res)=>{
     }
 })
 
-
+app.post("/submit", async (req,res)=>{
+    try {
+        const {secret} = req.body
+        console.log(req.user);
+        const foundUser = await User.findById(req.user.id)
+        if(foundUser){
+            foundUser.secret = secret
+            await foundUser.save()
+            res.redirect("/secrets")
+        }
+    } catch (error) {
+        console.log(error);
+    }
+})
 app.post("/register", async (req,res)=>{
     try {
         const {username, password} = req.body
